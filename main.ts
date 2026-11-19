@@ -91,7 +91,10 @@ async function main(): Promise<void> {
   process.stdout.write('[entry] registered; waiting for the env to say done\n');
 
   await waitForDone();
-  server.close();
+  // The suite is done and its export is written, so no connection still matters: drop any
+  // keep-alive sockets first, then wait for the close itself before exiting.
+  server.closeAllConnections();
+  await new Promise<void>((resolve) => server.close(() => resolve()));
   process.stdout.write('[entry] done\n');
 }
 
